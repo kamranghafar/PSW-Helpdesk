@@ -17,16 +17,16 @@ yarn-error.log*
 coverage/
 .nyc_output/
 
+# OS
+.DS_Store
+Thumbs.db
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# OS
-.DS_Store
-Thumbs.db
 
 # Build
 dist/

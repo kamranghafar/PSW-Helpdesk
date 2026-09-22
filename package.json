@@ -5,31 +5,27 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "jest --coverage",
-    "test:watch": "jest --watch",
-    "lint": "eslint src tests"
+    "dev": "NODE_ENV=development nodemon src/server.js",
+    "test": "NODE_ENV=test jest --coverage",
+    "test:watch": "NODE_ENV=test jest --watch"
   },
-  "keywords": ["psw", "helpdesk", "support"],
-  "author": "PSW Development Team",
-  "license": "UNLICENSED",
-  "engines": {
-    "node": ">=20.0.0"
-  },
+  "keywords": ["psw", "helpdesk", "express"],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
     "helmet": "^7.1.0",
-    "cors": "^2.8.5",
     "express-rate-limit": "^7.1.5",
-    "rate-limit-redis": "^4.2.0",
-    "redis": "^4.6.12",
+    "winston": "^3.11.0",
     "dotenv": "^16.3.1",
-    "winston": "^3.11.0"
+    "cors": "^2.8.5"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^6.3.3",
-    "nodemon": "^3.0.2",
-    "eslint": "^8.56.0"
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

@@ -1,55 +1,42 @@
 const request = require('supertest');
 const app = require('../src/app');
 
-describe('Health Check Endpoint', () => {
-  describe('GET /api/health', () => {
-    it('should return 200 status', async () => {
-      const response = await request(app).get('/api/health');
+describe('GET /api/health', () => {
+  it('should return 200 status', async () => {
+    const response = await request(app).get('/api/health');
+    
+    expect(response.status).toBe(200);
+  });
 
-      expect(response.status).toBe(200);
-    });
+  it('should return ok status in response body', async () => {
+    const response = await request(app).get('/api/health');
+    
+    expect(response.body).toHaveProperty('status', 'ok');
+  });
 
-    it('should return health check data', async () => {
-      const response = await request(app).get('/api/health');
+  it('should return timestamp in ISO format', async () => {
+    const response = await request(app).get('/api/health');
+    
+    expect(response.body).toHaveProperty('timestamp');
+    expect(response.body.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+  });
 
-      expect(response.body).toHaveProperty('status', 'ok');
-      expect(response.body).toHaveProperty('timestamp');
-      expect(response.body).toHaveProperty('uptime');
-      expect(response.body).toHaveProperty('environment');
-      expect(response.body).toHaveProperty('memory');
-    });
+  it('should return environment field', async () => {
+    const response = await request(app).get('/api/health');
+    
+    expect(response.body).toHaveProperty('environment');
+    expect(response.body.environment).toBe('test');
+  });
 
-    it('should return valid timestamp', async () => {
-      const response = await request(app).get('/api/health');
+  it('should return Content-Type application/json', async () => {
+    const response = await request(app).get('/api/health');
+    
+    expect(response.headers['content-type']).toMatch(/application\/json/);
+  });
 
-      const timestamp = new Date(response.body.timestamp);
-      expect(timestamp).toBeInstanceOf(Date);
-      expect(timestamp.getTime()).not.toBeNaN();
-    });
-
-    it('should return memory usage', async () => {
-      const response = await request(app).get('/api/health');
-
-      expect(response.body.memory).toHaveProperty('used');
-      expect(response.body.memory).toHaveProperty('total');
-      expect(typeof response.body.memory.used).toBe('number');
-      expect(typeof response.body.memory.total).toBe('number');
-      expect(response.body.memory.used).toBeGreaterThan(0);
-      expect(response.body.memory.total).toBeGreaterThan(0);
-    });
-
-    it('should return uptime as a number', async () => {
-      const response = await request(app).get('/api/health');
-
-      expect(typeof response.body.uptime).toBe('number');
-      expect(response.body.uptime).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should return environment', async () => {
-      const response = await request(app).get('/api/health');
-
-      expect(response.body.environment).toBeDefined();
-      expect(typeof response.body.environment).toBe('string');
-    });
+  it('should have all required fields in response', async () => {
+    const response = await request(app).get('/api/health');
+    
+    expect(Object.keys(response.body).sort()).toEqual(['environment', 'status', 'timestamp']);
   });
 });

@@ -5,23 +5,17 @@ const config = {
   port: parseInt(process.env.PORT, 10) || 3000,
   logLevel: process.env.LOG_LEVEL || 'info',
   
-  database: {
-    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/psw_helpdesk'
-  },
-  
-  redis: {
-    url: process.env.REDIS_URL || 'redis://localhost:6379'
-  },
-  
+  // Rate limiting
   rateLimit: {
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 600000, // 10 minutes
-    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 5
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 10 * 60 * 1000, // 10 minutes
+    max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 5, // 5 requests per window
   },
   
-  security: {
-    bodyLimit: process.env.BODY_LIMIT || '10kb',
-    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000'
-  }
+  // CORS
+  cors: {
+    origin: process.env.CORS_ORIGIN || '*',
+    credentials: true,
+  },
 };
 
 module.exports = config;
