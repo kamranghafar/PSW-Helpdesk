@@ -1,36 +1,32 @@
 const logger = require('../utils/logger');
 
-// 404 handler
-const notFoundHandler = (req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Cannot ${req.method} ${req.path}`,
-  });
-};
-
-// Global error handler
-const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-
-  // Log error details (exclude sensitive info)
-  logger.error({
-    message: message,
-    statusCode: statusCode,
-    path: req.path,
+/**
+ * Global error handling middleware
+ * @param {Error} err - Error object
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ * @param {function} next - Express next function
+ */
+function errorHandler(err, req, res, next) {
+  // Log error (without PII)
+  logger.error('Error occurred', {
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    url: req.url,
     method: req.method,
-    ip: req.ip,
-    stack: err.stack,
+    ip: req.ip
   });
+
+  // Determine status code
+  const statusCode = err.statusCode || 500;
 
   // Send error response
   res.status(statusCode).json({
-    error: statusCode >= 500 ? 'Internal Server Error' : message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    error: {
+      message: err.message || 'Internal server error',
+      status: statusCode
+    }
   });
-};
+}
 
-module.exports = {
-  notFoundHandler,
-  errorHandler,
-};
+module.exports = errorHandler;

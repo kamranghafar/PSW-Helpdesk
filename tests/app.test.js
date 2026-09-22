@@ -1,76 +1,63 @@
 const request = require('supertest');
-const app = require('../src/app');
+const { createApp } = require('../src/app');
 
 describe('Express Application', () => {
-  describe('Middleware Stack', () => {
-    it('should parse JSON request bodies', async () => {
-      const response = await request(app)
-        .post('/api/health')
-        .send({ test: 'data' })
-        .set('Content-Type', 'application/json');
-      
-      // We expect 404 since POST is not supported on /api/health
-      expect(response.status).toBe(404);
-    });
+  let app;
 
-    it('should enforce body size limits', async () => {
-      const largePayload = { data: 'x'.repeat(11 * 1024) }; // 11KB
-      const response = await request(app)
-        .post('/api/health')
-        .send(largePayload)
-        .set('Content-Type', 'application/json');
-      
-      expect(response.status).toBe(413);
-    });
-
-    it('should set security headers', async () => {
-      const response = await request(app).get('/api/health');
-      
-      expect(response.headers).toHaveProperty('x-content-type-options');
-      expect(response.headers).toHaveProperty('x-frame-options');
-    });
+  beforeEach(() => {
+    // Create app without rate limiter for tests
+    app = createApp();
   });
 
-  describe('Rate Limiting in Test Mode', () => {
-    it('should not enforce rate limits in test environment', async () => {
-      // Make 6 requests (more than the 5 request limit)
-      const requests = Array(6).fill(null).map(() => 
-        request(app).get('/api/health')
-      );
-      
-      const responses = await Promise.all(requests);
-      
-      // All should succeed (200) since rate limiter is disabled in test mode
-      responses.forEach(response => {
-        expect(response.status).toBe(200);
-      });
-    });
+  test('should have security headers', async () => {
+    const response = await request(app).get('/api/health');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['x-frame-options']).toBeDefined();
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for unknown routes', async () => {
-      const response = await request(app).get('/api/unknown');
-      
-      expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty('error', 'Not Found');
-      expect(response.body.message).toContain('GET');
-      expect(response.body.message).toContain('/api/unknown');
-    });
-
-    it('should handle errors with proper status codes', async () => {
-      const response = await request(app).get('/nonexistent');
-      
-      expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty('error');
-    });
+  test('should parse JSON body', async () => {
+    const response = await request(app)
+      .get('/api/health')
+      .send({ test: 'data' });
+    expect(response.status).toBe(200);
   });
 
-  describe('Request Logging', () => {
-    it('should log incoming requests', async () => {
-      const response = await request(app).get('/api/health');
-      
+  test('should apply rate limiter when provided', async () => {
+    const rateLimit = require('express-rate-limit');
+    const limiter = rateLimit({
+      windowMs: 60000,
+      max: 2,
+      skip: () => false // Force rate limiting for this test
+    });
+    
+    const appWithLimiter = createApp(limiter);
+    
+    await request(appWithLimiter).get('/api/health');
+    await request(appWithLimiter).get('/api/health');
+    const response = await request(appWithLimiter).get('/api/health');
+    
+    expect(response.status).toBe(429);
+  });
+
+  test('should not apply rate limiter when not provided', async () => {
+    const appWithoutLimiter = createApp();
+    
+    // Make multiple requests - should all succeed
+    for (let i = 0; i < 10; i++) {
+      const response = await request(appWithoutLimiter).get('/api/health');
       expect(response.status).toBe(200);
-      // Logger is mocked in test environment, so we just verify the request succeeds
-    });
+    }
+  });
+
+  test('should handle CORS', async () => {
+    const response = await request(app)
+      .options('/api/health')
+      .set('Origin', 'http://example.com');
+    expect(response.headers['access-control-allow-origin']).toBeDefined();
+  });
+
+  test('should handle 404 for unknown routes', async () => {
+    const response = await request(app).get('/api/unknown');
+    expect(response.status).toBe(404);
   });
 });

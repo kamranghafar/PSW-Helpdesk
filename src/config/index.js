@@ -1,21 +1,18 @@
-require('dotenv').config();
-
-const config = {
-  env: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT, 10) || 3000,
-  logLevel: process.env.LOG_LEVEL || 'info',
-  
-  // Rate limiting
+module.exports = {
+  database: {
+    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/psw_helpdesk'
+  },
+  redis: {
+    url: process.env.REDIS_URL || 'redis://localhost:6379'
+  },
   rateLimit: {
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 10 * 60 * 1000, // 10 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 5, // 5 requests per window
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 600000, // 10 minutes
+    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 5
   },
-  
-  // CORS
-  cors: {
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true,
+  security: {
+    bodyLimit: process.env.BODY_LIMIT || '10kb',
+    corsOrigin: process.env.CORS_ORIGIN || '*'
   },
+  port: parseInt(process.env.PORT) || 3000,
+  nodeEnv: process.env.NODE_ENV || 'development'
 };
-
-module.exports = config;

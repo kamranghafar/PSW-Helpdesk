@@ -1,32 +1,35 @@
 {
   "name": "psw-helpdesk",
   "version": "1.0.0",
-  "description": "PSW Helpdesk Support Request System",
+  "description": "PSW Helpdesk Contact Page Backend",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "cross-env NODE_ENV=development nodemon src/server.js",
-    "test": "cross-env NODE_ENV=test jest --coverage",
-    "test:watch": "cross-env NODE_ENV=test jest --watch"
+    "dev": "nodemon src/server.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
   },
-  "keywords": ["psw", "helpdesk", "express"],
-  "author": "",
-  "license": "ISC",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "helmet": "^7.1.0",
+    "cors": "^2.8.5",
     "express-rate-limit": "^7.1.5",
     "winston": "^3.11.0",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5"
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^6.3.3",
-    "nodemon": "^3.0.2",
-    "cross-env": "^7.0.3"
+    "nodemon": "^3.0.2"
   },
-  "engines": {
-    "node": ">=20.0.0"
-  }
+  "keywords": [
+    "helpdesk",
+    "psw",
+    "support"
+  ],
+  "author": "PSW",
+  "license": "UNLICENSED"
 }
