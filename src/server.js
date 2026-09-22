@@ -1,59 +1,81 @@
-const config = require('./config');
+const app = require('./app');
+const env = require('./config/env');
 const logger = require('./utils/logger');
-const createApp = require('./app');
-const { initRateLimiter, closeRedisClient } = require('./middleware/rateLimiter');
-const { initHealthCheck, closeHealthCheckConnections } = require('./routes/health');
+const { closeRateLimiter } = require('./middleware/rateLimiter');
 
 let server;
 
-const startServer = async () => {
-  try {
-    // Initialize rate limiter
-    const rateLimiter = await initRateLimiter();
-    
-    // Initialize health check connections
-    await initHealthCheck();
-    
-    // Create Express app
-    const app = createApp(rateLimiter);
-    
-    // Start server
-    server = app.listen(config.port, () => {
-      logger.info(`Server started on port ${config.port} in ${config.env} mode`);
+// Start server
+const startServer = () => {
+  server = app.listen(env.port, env.host, () => {
+    logger.info(`Server started in ${env.nodeEnv} mode`, {
+      port: env.port,
+      host: env.host,
+      nodeVersion: process.version,
     });
-    
-    return server;
-  } catch (error) {
-    logger.error('Failed to start server', { error: error.message });
+  });
+
+  // Handle server errors
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      logger.error(`Port ${env.port} is already in use`);
+    } else {
+      logger.error('Server error', { error: error.message });
+    }
     process.exit(1);
-  }
+  });
 };
 
-const stopServer = async () => {
+// Graceful shutdown
+const shutdown = async (signal) => {
+  logger.info(`${signal} received, shutting down gracefully`);
+
   if (server) {
-    await new Promise((resolve) => server.close(resolve));
-    await closeRedisClient();
-    await closeHealthCheckConnections();
-    logger.info('Server stopped gracefully');
+    server.close(async () => {
+      logger.info('HTTP server closed');
+
+      // Close rate limiter Redis connection
+      await closeRateLimiter();
+
+      logger.info('All connections closed, exiting');
+      process.exit(0);
+    });
+
+    // Force shutdown after 10 seconds
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
   }
 };
 
-// Graceful shutdown per ADR-006
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  await stopServer();
-  process.exit(0);
+// Handle shutdown signals
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception', {
+    error: error.message,
+    stack: error.stack,
+  });
+  shutdown('uncaughtException');
 });
 
-process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  await stopServer();
-  process.exit(0);
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled rejection', {
+    reason: reason,
+    promise: promise,
+  });
+  shutdown('unhandledRejection');
 });
 
-// Start server if run directly
-if (require.main === module) {
+// Start the server if not in test mode
+if (!env.isTest()) {
   startServer();
 }
 
-module.exports = { startServer, stopServer };
+module.exports = { app, server, startServer, shutdown };
