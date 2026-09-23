@@ -53,10 +53,9 @@ describe('Express App', () => {
       const response = await request(app).get('/unknown');
       
       expect(response.status).toBe(404);
-      expect(response.body).toEqual({
-        error: 'Not found',
-        path: '/unknown'
-      });
+      expect(response.body.error).toBeDefined();
+      expect(response.body.error.message).toBe('Route not found');
+      expect(response.body.error.statusCode).toBe(404);
     });
   });
 
@@ -68,7 +67,9 @@ describe('Express App', () => {
         .send({ name: 'Test' });
       
       expect(response.status).toBe(501);
-      expect(response.body.error).toBe('Not implemented');
+      expect(response.body.error).toBeDefined();
+      expect(response.body.error.message).toBe('Endpoint not yet implemented');
+      expect(response.body.error.statusCode).toBe(501);
     });
   });
 

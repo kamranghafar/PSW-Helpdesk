@@ -42,7 +42,12 @@ function createApp(rateLimiter, setupRoutes) {
 
   // Stub for support requests endpoint
   app.post('/api/support-requests', (req, res) => {
-    res.status(501).json({ error: 'Not implemented' });
+    res.status(501).json({ 
+      error: {
+        message: 'Endpoint not yet implemented',
+        statusCode: 501
+      }
+    });
   });
 
   // Allow tests to inject additional routes
@@ -53,8 +58,10 @@ function createApp(rateLimiter, setupRoutes) {
   // 404 handler
   app.use((req, res) => {
     res.status(404).json({
-      error: 'Not found',
-      path: req.path
+      error: {
+        message: 'Route not found',
+        statusCode: 404
+      }
     });
   });
 
