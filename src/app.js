@@ -1,74 +1,57 @@
 const express = require('express');
+const path = require('path');
 const helmet = require('helmet');
-const config = require('./config');
-const healthRouter = require('./routes/health');
+const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
-const { logger, excludePII } = require('./utils/logger');
+const routes = require('./routes');
+const healthRoutes = require('./routes/health');
+const supportRequestRoutes = require('./routes/supportRequests');
 
-/**
- * Creates and configures an Express application
- * @param {Object} rateLimiter - Optional rate limiter middleware
- * @param {Function} setupRoutes - Optional callback to add routes before 404 handler
- * @returns {express.Application} Configured Express app
- */
-function createApp(rateLimiter, setupRoutes) {
-  const app = express();
+const app = express();
 
-  // Security middleware
-  app.use(helmet());
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+    },
+  },
+}));
 
-  // Body parsing
-  app.use(express.json({ limit: config.security.bodyLimit }));
-  app.use(express.urlencoded({ extended: true, limit: config.security.bodyLimit }));
+// View engine setup
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '..', 'views'));
 
-  // Request logging
-  app.use((req, res, next) => {
-    logger.info({
-      method: req.method,
-      path: req.path,
-      ip: req.ip,
-      body: req.body ? excludePII(req.body) : undefined
-    });
-    next();
+// Body parsing middleware
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Static files
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Request logging
+app.use((req, res, next) => {
+  logger.info('Incoming request', { 
+    method: req.method, 
+    path: req.path,
+    ip: req.ip 
   });
+  next();
+});
 
-  // Rate limiting (only if provided)
-  if (rateLimiter) {
-    app.use(rateLimiter);
-  }
+// Routes
+app.use('/', routes);
+app.use('/api/health', healthRoutes);
+app.use('/api/support-requests', supportRequestRoutes);
 
-  // Health check route
-  app.use('/api/health', healthRouter);
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
 
-  // Stub for support requests endpoint
-  app.post('/api/support-requests', (req, res) => {
-    res.status(501).json({ 
-      error: {
-        message: 'Endpoint not yet implemented',
-        statusCode: 501
-      }
-    });
-  });
+// Error handling middleware
+app.use(errorHandler);
 
-  // Allow tests to inject additional routes
-  if (setupRoutes) {
-    setupRoutes(app);
-  }
-
-  // 404 handler
-  app.use((req, res) => {
-    res.status(404).json({
-      error: {
-        message: 'Route not found',
-        statusCode: 404
-      }
-    });
-  });
-
-  // Error handler
-  app.use(errorHandler);
-
-  return app;
-}
-
-module.exports = createApp;
+module.exports = app;

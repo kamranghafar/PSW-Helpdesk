@@ -1,12 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const config = require('../config');
 
 router.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: config.nodeEnv
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString()
   });
 });
 
