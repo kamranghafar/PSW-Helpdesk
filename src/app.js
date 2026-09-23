@@ -1,74 +1,47 @@
 const express = require('express');
+const path = require('path');
 const helmet = require('helmet');
-const config = require('./config');
-const healthRouter = require('./routes/health');
+const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
-const { logger, excludePII } = require('./utils/logger');
+const rateLimiter = require('./middleware/rateLimiter');
+const config = require('./config');
 
-/**
- * Creates and configures an Express application
- * @param {Object} rateLimiter - Optional rate limiter middleware
- * @param {Function} setupRoutes - Optional callback to add routes before 404 handler
- * @returns {express.Application} Configured Express app
- */
-function createApp(rateLimiter, setupRoutes) {
-  const app = express();
+const app = express();
 
-  // Security middleware
-  app.use(helmet());
+// Security headers
+app.use(helmet());
 
-  // Body parsing
-  app.use(express.json({ limit: config.security.bodyLimit }));
-  app.use(express.urlencoded({ extended: true, limit: config.security.bodyLimit }));
+// Body parsing middleware
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-  // Request logging
-  app.use((req, res, next) => {
-    logger.info({
-      method: req.method,
-      path: req.path,
-      ip: req.ip,
-      body: req.body ? excludePII(req.body) : undefined
-    });
-    next();
+// Request logging
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`, {
+    ip: req.ip,
+    userAgent: req.get('user-agent')
   });
+  next();
+});
 
-  // Rate limiting (only if provided)
-  if (rateLimiter) {
-    app.use(rateLimiter);
-  }
+// Static file serving for CSS/JS/images
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
-  // Health check route
-  app.use('/api/health', healthRouter);
+// Helpdesk page route (public, no authentication required)
+app.get('/helpdesk', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'views', 'helpdesk.html'));
+});
 
-  // Stub for support requests endpoint
-  app.post('/api/support-requests', (req, res) => {
-    res.status(501).json({ 
-      error: {
-        message: 'Endpoint not yet implemented',
-        statusCode: 501
-      }
-    });
-  });
+// Root redirect to helpdesk page
+app.get('/', (req, res) => {
+  res.redirect('/helpdesk');
+});
 
-  // Allow tests to inject additional routes
-  if (setupRoutes) {
-    setupRoutes(app);
-  }
+// API routes with rate limiting
+app.use('/api', rateLimiter);
+app.use('/api', require('./routes'));
 
-  // 404 handler
-  app.use((req, res) => {
-    res.status(404).json({
-      error: {
-        message: 'Route not found',
-        statusCode: 404
-      }
-    });
-  });
+// Error handling middleware (must be last)
+app.use(errorHandler);
 
-  // Error handler
-  app.use(errorHandler);
-
-  return app;
-}
-
-module.exports = createApp;
+module.exports = app;
