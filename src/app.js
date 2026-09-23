@@ -54,7 +54,8 @@ function createApp(rateLimiter, setupRoutes) {
       error: {
         message: 'Route not found',
         statusCode: 404
-      }
+      },
+      path: req.path
     });
   });
 

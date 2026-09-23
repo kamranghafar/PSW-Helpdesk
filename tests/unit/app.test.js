@@ -74,7 +74,10 @@ describe('Express Application', () => {
       
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
-        error: 'Not found',
+        error: {
+          message: 'Route not found',
+          statusCode: 404
+        },
         path: '/unknown/route'
       });
     });
