@@ -1,31 +1,34 @@
-require('dotenv').config();
-const app = require('./app');
-const logger = require('./utils/logger');
+const config = require('./config');
+const { createDefaultApp } = require('./app');
+const { logger } = require('./utils/logger');
 
-const PORT = process.env.PORT || 3000;
+async function startServer() {
+  try {
+    const app = await createDefaultApp();
+    
+    const server = app.listen(config.port, () => {
+      logger.info(`Server started`, {
+        port: config.port,
+        environment: config.nodeEnv
+      });
+    });
 
-const server = app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`, {
-    port: PORT,
-    nodeEnv: process.env.NODE_ENV || 'development'
-  });
-});
+    // Graceful shutdown
+    const shutdown = () => {
+      logger.info('Shutting down server...');
+      server.close(() => {
+        logger.info('Server closed');
+        process.exit(0);
+      });
+    };
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
-  });
-});
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
-  });
-});
+  } catch (error) {
+    logger.error('Failed to start server', { error: error.message });
+    process.exit(1);
+  }
+}
 
-module.exports = server;
+startServer();

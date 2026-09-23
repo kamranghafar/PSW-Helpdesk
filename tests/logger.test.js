@@ -1,60 +1,89 @@
-const logger = require('../src/utils/logger');
+const { logger, excludePII } = require('../src/utils/logger');
 
-describe('Logger excludePII', () => {
-  test('should redact email field', () => {
-    const input = { email: 'user@example.com', other: 'data' };
-    const result = logger.excludePII(input);
-    expect(result.email).toBe('[REDACTED]');
-    expect(result.other).toBe('data');
-  });
+describe('Logger Utility', () => {
+  describe('excludePII', () => {
+    it('should redact email field', () => {
+      const input = { email: 'test@example.com', other: 'data' };
+      const result = excludePII(input);
+      
+      expect(result.email).toBe('[REDACTED]');
+      expect(result.other).toBe('data');
+    });
 
-  test('should redact name field', () => {
-    const input = { name: 'John Doe', other: 'data' };
-    const result = logger.excludePII(input);
-    expect(result.name).toBe('[REDACTED]');
-    expect(result.other).toBe('data');
-  });
+    it('should redact name field', () => {
+      const input = { name: 'John Doe', other: 'data' };
+      const result = excludePII(input);
+      
+      expect(result.name).toBe('[REDACTED]');
+      expect(result.other).toBe('data');
+    });
 
-  test('should redact message field', () => {
-    const input = { message: 'Secret message', other: 'data' };
-    const result = logger.excludePII(input);
-    expect(result.message).toBe('[REDACTED]');
-    expect(result.other).toBe('data');
-  });
+    it('should redact message field', () => {
+      const input = { message: 'Secret message', other: 'data' };
+      const result = excludePII(input);
+      
+      expect(result.message).toBe('[REDACTED]');
+      expect(result.other).toBe('data');
+    });
 
-  test('should redact all PII fields', () => {
-    const input = {
-      email: 'user@example.com',
-      name: 'John Doe',
-      message: 'Secret message',
-      reference: 'HCP-20260922-0001'
-    };
-    const result = logger.excludePII(input);
-    expect(result.email).toBe('[REDACTED]');
-    expect(result.name).toBe('[REDACTED]');
-    expect(result.message).toBe('[REDACTED]');
-    expect(result.reference).toBe('HCP-20260922-0001');
-  });
+    it('should redact multiple PII fields', () => {
+      const input = {
+        email: 'test@example.com',
+        name: 'John Doe',
+        message: 'Secret',
+        subject: 'Public'
+      };
+      const result = excludePII(input);
+      
+      expect(result.email).toBe('[REDACTED]');
+      expect(result.name).toBe('[REDACTED]');
+      expect(result.message).toBe('[REDACTED]');
+      expect(result.subject).toBe('Public');
+    });
 
-  test('should return non-object as-is', () => {
-    expect(logger.excludePII(null)).toBe(null);
-    expect(logger.excludePII(undefined)).toBe(undefined);
-    expect(logger.excludePII('string')).toBe('string');
-    expect(logger.excludePII(123)).toBe(123);
-  });
+    it('should leave other fields unchanged', () => {
+      const input = {
+        email: 'test@example.com',
+        subject: 'Test Subject',
+        timestamp: '2026-09-23T10:00:00Z',
+        ip: '192.168.1.1'
+      };
+      const result = excludePII(input);
+      
+      expect(result.subject).toBe('Test Subject');
+      expect(result.timestamp).toBe('2026-09-23T10:00:00Z');
+      expect(result.ip).toBe('192.168.1.1');
+    });
 
-  test('should not modify original object', () => {
-    const input = { email: 'user@example.com', name: 'John' };
-    const result = logger.excludePII(input);
-    expect(input.email).toBe('user@example.com');
-    expect(input.name).toBe('John');
-    expect(result.email).toBe('[REDACTED]');
-    expect(result.name).toBe('[REDACTED]');
-  });
+    it('should handle objects without PII fields', () => {
+      const input = { subject: 'Test', other: 'data' };
+      const result = excludePII(input);
+      
+      expect(result).toEqual(input);
+    });
 
-  test('should handle empty object', () => {
-    const input = {};
-    const result = logger.excludePII(input);
-    expect(result).toEqual({});
+    it('should handle null input', () => {
+      const result = excludePII(null);
+      expect(result).toBeNull();
+    });
+
+    it('should handle undefined input', () => {
+      const result = excludePII(undefined);
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle non-object input', () => {
+      expect(excludePII('string')).toBe('string');
+      expect(excludePII(123)).toBe(123);
+      expect(excludePII(true)).toBe(true);
+    });
+
+    it('should not modify original object', () => {
+      const input = { email: 'test@example.com', other: 'data' };
+      const result = excludePII(input);
+      
+      expect(input.email).toBe('test@example.com');
+      expect(result.email).toBe('[REDACTED]');
+    });
   });
 });

@@ -1,7 +1,7 @@
 {
   "name": "psw-helpdesk",
   "version": "1.0.0",
-  "description": "PSW Helpdesk Contact Page Backend",
+  "description": "PSW Helpdesk Contact Page Backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -9,27 +9,25 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   },
+  "keywords": ["psw", "helpdesk", "express", "api"],
+  "author": "PSW Team",
+  "license": "UNLICENSED",
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
     "express": "^4.18.2",
     "helmet": "^7.1.0",
-    "cors": "^2.8.5",
     "express-rate-limit": "^7.1.5",
+    "redis": "^4.6.12",
+    "rate-limit-redis": "^4.2.0",
     "winston": "^3.11.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^6.3.3",
     "nodemon": "^3.0.2"
-  },
-  "keywords": [
-    "helpdesk",
-    "psw",
-    "support"
-  ],
-  "author": "PSW",
-  "license": "UNLICENSED"
+  }
 }

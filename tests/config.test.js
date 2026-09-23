@@ -1,28 +1,31 @@
 const config = require('../src/config');
 
 describe('Configuration', () => {
-  it('should load default values', () => {
-    expect(config.env).toBeDefined();
-    expect(config.port).toBeDefined();
-    expect(config.logLevel).toBeDefined();
+  it('should have database config', () => {
+    expect(config.database).toBeDefined();
+    expect(config.database.url).toBeDefined();
   });
-  
-  it('should have database configuration', () => {
-    expect(config.database).toHaveProperty('url');
+
+  it('should have redis config', () => {
+    expect(config.redis).toBeDefined();
+    expect(config.redis.url).toBeDefined();
   });
-  
-  it('should have redis configuration', () => {
-    expect(config.redis).toHaveProperty('url');
+
+  it('should have rateLimit config', () => {
+    expect(config.rateLimit).toBeDefined();
+    expect(config.rateLimit.windowMs).toBeDefined();
+    expect(config.rateLimit.maxRequests).toBeDefined();
   });
-  
-  it('should have rate limit configuration', () => {
-    expect(config.rateLimit).toHaveProperty('windowMs');
-    expect(config.rateLimit).toHaveProperty('maxRequests');
+
+  it('should have security config', () => {
+    expect(config.security).toBeDefined();
+    expect(config.security.bodyLimit).toBeDefined();
+    expect(config.security.corsOrigin).toBeDefined();
+  });
+
+  it('should have correct default values', () => {
+    expect(config.rateLimit.windowMs).toBe(600000); // 10 minutes
     expect(config.rateLimit.maxRequests).toBe(5);
-  });
-  
-  it('should have security configuration', () => {
-    expect(config.security).toHaveProperty('bodyLimit');
-    expect(config.security).toHaveProperty('corsOrigin');
+    expect(config.security.bodyLimit).toBe('10kb');
   });
 });
