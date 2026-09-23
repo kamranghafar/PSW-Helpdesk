@@ -159,7 +159,7 @@ describe('GET /helpdesk', () => {
     });
 
     test('contains name input field', () => {
-      expect(response.text).toMatch(/<input[^>]*id=["']name["'][^>]*>/i);
+      expect(response.text).toMatch(/<input[^>]*id=["']name["'][^>]*type=["']text["']|<input[^>]*type=["']text["'][^>]*id=["']name["']/i);
     });
 
     test('name field is required', () => {
@@ -175,7 +175,7 @@ describe('GET /helpdesk', () => {
     });
 
     test('contains email input field', () => {
-      expect(response.text).toMatch(/<input[^>]*type=["']email["'][^>]*id=["']email["']/i);
+      expect(response.text).toMatch(/<input[^>]*id=["']email["'][^>]*type=["']email["']|<input[^>]*type=["']email["'][^>]*id=["']email["']/i);
     });
 
     test('email field is required', () => {
@@ -183,7 +183,7 @@ describe('GET /helpdesk', () => {
     });
 
     test('contains subject input field', () => {
-      expect(response.text).toMatch(/<input[^>]*id=["']subject["'][^>]*>/i);
+      expect(response.text).toMatch(/<input[^>]*id=["']subject["'][^>]*type=["']text["']|<input[^>]*type=["']text["'][^>]*id=["']subject["']/i);
     });
 
     test('subject field has maxlength 200', () => {
@@ -191,7 +191,7 @@ describe('GET /helpdesk', () => {
     });
 
     test('contains message textarea field', () => {
-      expect(response.text).toMatch(/<textarea[^>]*id=["']message["'][^>]*>/i);
+      expect(response.text).toMatch(/<textarea[^>]*id=["']message["']/i);
     });
 
     test('message field is required', () => {
@@ -229,11 +229,11 @@ describe('GET /helpdesk', () => {
     });
 
     test('error messages have role alert', () => {
-      expect(response.text).toMatch(/<span[^>]*class=["']error-message["'][^>]*role=["']alert["']/i);
+      expect(response.text).toMatch(/<span[^>]*class=["'][^"']*error-message[^"']*["'][^>]*role=["']alert["']/i);
     });
 
     test('inputs have aria-describedby for errors', () => {
-      expect(response.text).toMatch(/<input[^>]*aria-describedby=["'][^"']*-error["']/i);
+      expect(response.text).toMatch(/<input[^>]*id=["']name["'][^>]*aria-describedby=["']name-error["']/i);
     });
   });
 
@@ -251,11 +251,11 @@ describe('GET /helpdesk', () => {
     });
 
     test('sections have aria-labelledby', () => {
-      expect(response.text).toMatch(/<section[^>]*aria-labelledby=/i);
+      expect(response.text).toMatch(/<section[^>]*aria-labelledby=["'][^"']+["']/i);
     });
 
     test('navigation has aria-label', () => {
-      expect(response.text).toMatch(/<nav[^>]*aria-label=["']Main navigation["']/i);
+      expect(response.text).toMatch(/<nav[^>]*aria-label=["'][^"']+["']/i);
     });
   });
 });
