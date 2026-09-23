@@ -1,18 +1,9 @@
 const express = require('express');
-const healthRouter = require('./health');
-const supportRequestsRouter = require('./supportRequests');
-
 const router = express.Router();
 
-// Health check endpoint
-router.use('/api/health', healthRouter);
-
-// Support requests endpoint
-router.use('/api/support-requests', supportRequestsRouter);
-
-// Redirect root to helpdesk
+// Home route
 router.get('/', (req, res) => {
-  res.redirect('/helpdesk');
+  res.json({ message: 'PSW Helpdesk API' });
 });
 
 // Helpdesk contact page
