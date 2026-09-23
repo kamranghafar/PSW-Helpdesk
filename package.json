@@ -1,36 +1,29 @@
 {
-  "name": "psw-helpdesk-backend",
+  "name": "psw-helpdesk",
   "version": "1.0.0",
-  "description": "PSW Helpdesk Backend Application",
-  "main": "src/app.js",
+  "description": "PSW Helpdesk Contact Page",
+  "main": "src/server.js",
   "scripts": {
-    "test": "cross-env NODE_ENV=test jest --coverage --verbose tests/helpdesk-page.test.js",
-    "test:all": "cross-env NODE_ENV=test jest --coverage --verbose",
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "cross-env NODE_ENV=test jest --coverage --verbose",
+    "test:watch": "cross-env NODE_ENV=test jest --watch"
   },
-  "keywords": ["psw", "helpdesk", "pakistan-single-window"],
-  "author": "",
+  "keywords": ["psw", "helpdesk", "pakistan", "single-window"],
+  "author": "PSW",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
+    "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "winston": "^3.11.0",
-    "express-rate-limit": "^7.1.5"
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "supertest": "^6.3.3",
-    "nodemon": "^3.0.2"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ]
+    "nodemon": "^3.0.2",
+    "cross-env": "^7.0.3"
   }
 }

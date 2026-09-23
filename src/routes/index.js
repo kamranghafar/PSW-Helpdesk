@@ -1,20 +1,18 @@
 const express = require('express');
-const { router: healthRouter } = require('./health');
+const healthRouter = require('./health');
+const supportRequestsRouter = require('./supportRequests');
 
 const router = express.Router();
 
-// Health check endpoint per ADR-009
-router.use('/health', healthRouter);
+// Health check endpoint
+router.use('/api/health', healthRouter);
 
-// Placeholder for support requests endpoint (US-011)
-// Will be implemented in subsequent tasks
-router.post('/support-requests', (req, res) => {
-  res.status(501).json({
-    error: {
-      message: 'Endpoint not yet implemented',
-      statusCode: 501
-    }
-  });
+// Support requests endpoint
+router.use('/api/support-requests', supportRequestsRouter);
+
+// Helpdesk contact page
+router.get('/helpdesk', (req, res) => {
+  res.render('helpdesk');
 });
 
 module.exports = router;

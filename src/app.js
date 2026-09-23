@@ -1,45 +1,39 @@
 const express = require('express');
-const path = require('path');
 const helmet = require('helmet');
+const path = require('path');
+const config = require('./config');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
-const rateLimiter = require('./middleware/rateLimiter');
-const config = require('./config');
+const routes = require('./routes');
 
 const app = express();
 
-// Security headers
+// Security middleware
 app.use(helmet());
+
+// View engine configuration
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '..', 'views'));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+// Static files
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 // Request logging
 app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`, {
-    ip: req.ip,
-    userAgent: req.get('user-agent')
+  logger.info('Incoming request', {
+    method: req.method,
+    path: req.path,
+    ip: req.ip
   });
   next();
 });
 
-// Static file serving for CSS/JS/images
-app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// Helpdesk page route (public, no authentication required)
-app.get('/helpdesk', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'views', 'helpdesk.html'));
-});
-
-// Root redirect to helpdesk page
-app.get('/', (req, res) => {
-  res.redirect('/helpdesk');
-});
-
-// API routes with rate limiting
-app.use('/api', rateLimiter);
-app.use('/api', require('./routes'));
+// Routes
+app.use('/', routes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
