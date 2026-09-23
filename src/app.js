@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const config = require('./config');
 const healthRouter = require('./routes/health');
+const supportRequestsRouter = require('./routes/supportRequests');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { logger } = require('./utils/logger');
 
@@ -45,6 +46,7 @@ function createApp(rateLimiter) {
 
   // Routes
   app.use('/api/health', healthRouter);
+  app.use('/api/support-requests', supportRequestsRouter);
 
   // 404 handler
   app.use(notFoundHandler);

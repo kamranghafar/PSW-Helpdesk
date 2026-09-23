@@ -29,8 +29,10 @@ function errorHandler(err, req, res, next) {
  */
 function notFoundHandler(req, res) {
   res.status(404).json({
-    error: 'Not found',
-    path: req.path
+    error: {
+      message: 'Route not found',
+      statusCode: 404
+    }
   });
 }
 
