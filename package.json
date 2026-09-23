@@ -9,8 +9,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "NODE_ENV=test jest --coverage --verbose",
-    "test:watch": "NODE_ENV=test jest --watch"
+    "test": "cross-env NODE_ENV=test jest --coverage --verbose",
+    "test:watch": "cross-env NODE_ENV=test jest --watch"
   },
   "keywords": [
     "express",
@@ -26,6 +26,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
     "supertest": "^6.3.3"
