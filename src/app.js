@@ -1,57 +1,39 @@
 const express = require('express');
-const path = require('path');
 const helmet = require('helmet');
-const logger = require('./utils/logger');
-const errorHandler = require('./middleware/errorHandler');
-const routes = require('./routes');
-const healthRoutes = require('./routes/health');
-const supportRequestRoutes = require('./routes/supportRequests');
+const rateLimit = require('express-rate-limit');
+const path = require('path');
 
 const app = express();
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-    },
-  },
-}));
+app.use(helmet());
 
-// View engine setup
+// Rate limiting for API routes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use('/api/', limiter);
+
+// Body parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// View engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '..', 'views'));
+app.set('views', path.join(__dirname, 'views'));
 
-// Body parsing middleware
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+// Mount routes
+const supportRequestsRouter = require('./routes/supportRequests');
+const helpdeskRouter = require('./routes/helpdesk');
 
-// Static files
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use('/api/support-requests', supportRequestsRouter);
+app.use('/', helpdeskRouter);
 
-// Request logging
-app.use((req, res, next) => {
-  logger.info('Incoming request', { 
-    method: req.method, 
-    path: req.path,
-    ip: req.ip 
-  });
-  next();
+// Error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal server error' });
 });
-
-// Routes
-app.use('/', routes);
-app.use('/api/health', healthRoutes);
-app.use('/api/support-requests', supportRequestRoutes);
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-// Error handling middleware
-app.use(errorHandler);
 
 module.exports = app;
