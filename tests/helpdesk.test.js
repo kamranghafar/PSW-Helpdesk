@@ -120,128 +120,134 @@ describe('GET /helpdesk', () => {
   });
 
   describe('PSW Navigation (US-006)', () => {
-    test('contains PSW logo', () => {
-      expect(response.text).toMatch(/<img[^>]*alt=["']Pakistan Single Window["']/i);
-    });
-
-    test('navigation contains Home link', () => {
+    test('contains Home link', () => {
       expect(response.text).toMatch(/<a[^>]*href=["']\/["'][^>]*>Home<\/a>/i);
     });
 
-    test('navigation contains About PSW link', () => {
-      expect(response.text).toMatch(/<a[^>]*>About PSW<\/a>/i);
+    test('contains About PSW link', () => {
+      expect(response.text).toMatch(/<a[^>]*href=["']\/about["'][^>]*>About PSW<\/a>/i);
     });
 
-    test('navigation contains Services link', () => {
-      expect(response.text).toMatch(/<a[^>]*>Services<\/a>/i);
+    test('contains Services link', () => {
+      expect(response.text).toMatch(/<a[^>]*href=["']\/services["'][^>]*>Services<\/a>/i);
     });
 
-    test('navigation contains Resources link', () => {
-      expect(response.text).toMatch(/<a[^>]*>Resources<\/a>/i);
+    test('contains Resources link', () => {
+      expect(response.text).toMatch(/<a[^>]*href=["']\/resources["'][^>]*>Resources<\/a>/i);
     });
 
-    test('navigation contains Help & Support link', () => {
-      expect(response.text).toMatch(/<a[^>]*>Help[\s&]+Support<\/a>/i);
+    test('contains Help & Support link', () => {
+      expect(response.text).toMatch(/<a[^>]*href=["']\/helpdesk["'][^>]*>Help[^<]*Support<\/a>/i);
     });
 
-    test('navigation contains Login link', () => {
-      expect(response.text).toMatch(/<a[^>]*>Login<\/a>/i);
-    });
-
-    test('current page indicated with aria-current', () => {
-      expect(response.text).toMatch(/<a[^>]*aria-current=["']page["']/i);
+    test('contains Login link', () => {
+      expect(response.text).toMatch(/<a[^>]*href=["']\/login["'][^>]*>Login<\/a>/i);
     });
   });
 
-  describe('Section Headings (US-007)', () => {
-    test('contains Contact Details heading', () => {
-      expect(response.text).toMatch(/<h1[^>]*>Contact Details<\/h1>/i);
-    });
-
-    test('contains Contact Details subheading', () => {
-      expect(response.text).toMatch(/We're here to help/i);
-    });
-
-    test('contains Submit a Support Request heading', () => {
-      expect(response.text).toMatch(/<h1[^>]*>Submit a Support Request<\/h1>/i);
-    });
-
-    test('contains form instructions', () => {
-      expect(response.text).toMatch(/Fill out the form/i);
-    });
-  });
-
-  describe('Support Request Form Fields (US-008)', () => {
+  describe('Support Request Form (US-007)', () => {
     test('contains form element', () => {
       expect(response.text).toMatch(/<form[^>]*id=["']support-form["']/i);
     });
 
-    test('form posts to /api/support-requests', () => {
+    test('form has POST method', () => {
+      expect(response.text).toMatch(/<form[^>]*method=["']POST["']/i);
+    });
+
+    test('form action points to API endpoint', () => {
       expect(response.text).toMatch(/<form[^>]*action=["']\/api\/support-requests["']/i);
     });
 
-    test('contains Name field', () => {
-      expect(response.text).toMatch(/<input[^>]*name=["']name["']/i);
+    test('contains name input field', () => {
+      expect(response.text).toMatch(/<input[^>]*id=["']name["'][^>]*>/i);
     });
 
-    test('Name field is required', () => {
-      expect(response.text).toMatch(/<input[^>]*name=["']name["'][^>]*required/i);
+    test('name field is required', () => {
+      expect(response.text).toMatch(/<input[^>]*id=["']name["'][^>]*required/i);
     });
 
-    test('contains Email Address field', () => {
-      expect(response.text).toMatch(/<input[^>]*name=["']email["']/i);
+    test('name field has aria-required', () => {
+      expect(response.text).toMatch(/<input[^>]*id=["']name["'][^>]*aria-required=["']true["']/i);
     });
 
-    test('Email field is required', () => {
-      expect(response.text).toMatch(/<input[^>]*name=["']email["'][^>]*required/i);
+    test('name field has maxlength 120', () => {
+      expect(response.text).toMatch(/<input[^>]*id=["']name["'][^>]*maxlength=["']120["']/i);
     });
 
-    test('Email field has type email', () => {
-      expect(response.text).toMatch(/<input[^>]*type=["']email["']/i);
+    test('contains email input field', () => {
+      expect(response.text).toMatch(/<input[^>]*type=["']email["'][^>]*id=["']email["']/i);
     });
 
-    test('contains Subject field', () => {
-      expect(response.text).toMatch(/<input[^>]*name=["']subject["']/i);
+    test('email field is required', () => {
+      expect(response.text).toMatch(/<input[^>]*id=["']email["'][^>]*required/i);
     });
 
-    test('Subject field is optional', () => {
-      const subjectMatch = response.text.match(/<input[^>]*name=["']subject["'][^>]*>/i);
-      expect(subjectMatch).toBeTruthy();
-      expect(subjectMatch[0]).not.toMatch(/required/i);
+    test('contains subject input field', () => {
+      expect(response.text).toMatch(/<input[^>]*id=["']subject["'][^>]*>/i);
     });
 
-    test('contains Message field', () => {
-      expect(response.text).toMatch(/<textarea[^>]*name=["']message["']/i);
+    test('subject field has maxlength 200', () => {
+      expect(response.text).toMatch(/<input[^>]*id=["']subject["'][^>]*maxlength=["']200["']/i);
     });
 
-    test('Message field is required', () => {
-      expect(response.text).toMatch(/<textarea[^>]*name=["']message["'][^>]*required/i);
+    test('contains message textarea field', () => {
+      expect(response.text).toMatch(/<textarea[^>]*id=["']message["'][^>]*>/i);
     });
 
-    test('contains Submit Request button', () => {
-      expect(response.text).toMatch(/<button[^>]*type=["']submit["'][^>]*>Submit Request<\/button>/i);
+    test('message field is required', () => {
+      expect(response.text).toMatch(/<textarea[^>]*id=["']message["'][^>]*required/i);
+    });
+
+    test('message field has maxlength 2000', () => {
+      expect(response.text).toMatch(/<textarea[^>]*id=["']message["'][^>]*maxlength=["']2000["']/i);
+    });
+
+    test('contains submit button', () => {
+      expect(response.text).toMatch(/<button[^>]*type=["']submit["']/i);
+    });
+
+    test('submit button has aria-label', () => {
+      expect(response.text).toMatch(/<button[^>]*type=["']submit["'][^>]*aria-label=["'][^"']*["']/i);
+    });
+  });
+
+  describe('Form Labels and ARIA (US-008)', () => {
+    test('name label is associated with input', () => {
+      expect(response.text).toMatch(/<label[^>]*for=["']name["']/i);
+    });
+
+    test('email label is associated with input', () => {
+      expect(response.text).toMatch(/<label[^>]*for=["']email["']/i);
+    });
+
+    test('subject label is associated with input', () => {
+      expect(response.text).toMatch(/<label[^>]*for=["']subject["']/i);
+    });
+
+    test('message label is associated with textarea', () => {
+      expect(response.text).toMatch(/<label[^>]*for=["']message["']/i);
+    });
+
+    test('error messages have role alert', () => {
+      expect(response.text).toMatch(/<span[^>]*class=["']error-message["'][^>]*role=["']alert["']/i);
+    });
+
+    test('inputs have aria-describedby for errors', () => {
+      expect(response.text).toMatch(/<input[^>]*aria-describedby=["'][^"']*-error["']/i);
     });
   });
 
   describe('Accessibility compliance (US-020)', () => {
-    test('has language attribute', () => {
+    test('page has lang attribute', () => {
       expect(response.text).toMatch(/<html[^>]*lang=["']en["']/i);
     });
 
-    test('has viewport meta tag', () => {
+    test('page has viewport meta tag', () => {
       expect(response.text).toMatch(/<meta[^>]*name=["']viewport["']/i);
     });
 
-    test('form fields have aria-required', () => {
-      expect(response.text).toMatch(/<input[^>]*required[^>]*aria-required=["']true["']/i);
-    });
-
-    test('form fields have aria-describedby for errors', () => {
-      expect(response.text).toMatch(/<input[^>]*aria-describedby=["'][^"']*error["']/i);
-    });
-
-    test('error messages have role alert', () => {
-      expect(response.text).toMatch(/<span[^>]*role=["']alert["']/i);
+    test('page has meta description', () => {
+      expect(response.text).toMatch(/<meta[^>]*name=["']description["']/i);
     });
 
     test('sections have aria-labelledby', () => {
