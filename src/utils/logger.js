@@ -1,5 +1,8 @@
 const winston = require('winston');
 
+/**
+ * Winston logger with JSON formatting for structured logging
+ */
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
@@ -17,25 +20,30 @@ const logger = winston.createLogger({
 });
 
 /**
- * Removes PII fields from an object by replacing them with "[REDACTED]"
- * @param {Object} obj - The object to sanitize
- * @returns {Object} A new object with PII fields redacted
+ * Excludes PII fields from an object by replacing email, name, and message with [REDACTED]
+ * @param {object} obj - Object potentially containing PII
+ * @returns {object} Copy of object with PII fields redacted, or original value if not an object
  */
 function excludePII(obj) {
   if (!obj || typeof obj !== 'object') {
     return obj;
   }
+
+  const copy = { ...obj };
   
-  const sanitized = { ...obj };
-  const piiFields = ['email', 'name', 'message'];
-  
-  for (const field of piiFields) {
-    if (sanitized.hasOwnProperty(field)) {
-      sanitized[field] = '[REDACTED]';
-    }
+  if ('email' in copy) {
+    copy.email = '[REDACTED]';
   }
-  
-  return sanitized;
+  if ('name' in copy) {
+    copy.name = '[REDACTED]';
+  }
+  if ('message' in copy) {
+    copy.message = '[REDACTED]';
+  }
+
+  return copy;
 }
 
-module.exports = { logger, excludePII };
+logger.excludePII = excludePII;
+
+module.exports = logger;

@@ -1,69 +1,70 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const config = require('./config');
+const rateLimit = require('express-rate-limit');
 const healthRouter = require('./routes/health');
-const supportRequestsRouter = require('./routes/supportRequests');
-const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
-const { logger } = require('./utils/logger');
+const errorHandler = require('./middleware/errorHandler');
+const logger = require('./utils/logger');
+const config = require('./config');
 
 /**
- * Creates and configures Express application
- * @param {Function} rateLimiter - Optional rate limiter middleware
- * @returns {express.Application} Configured Express app
+ * Factory function to create Express app with optional rate limiter
+ * @param {object} rateLimiter - Optional express-rate-limit middleware
+ * @returns {object} Express app instance
  */
 function createApp(rateLimiter) {
   const app = express();
 
   // Security middleware
   app.use(helmet());
-  
-  // CORS
-  app.use(cors({
-    origin: config.security.corsOrigin,
-    credentials: true
-  }));
-
-  // Body parsing
+  app.use(cors({ origin: config.security.corsOrigin }));
   app.use(express.json({ limit: config.security.bodyLimit }));
-  app.use(express.urlencoded({ extended: true, limit: config.security.bodyLimit }));
 
-  // Apply rate limiter if provided
+  // Apply rate limiter if provided (disabled in test mode)
   if (rateLimiter) {
-    app.use(rateLimiter);
-    logger.info('Rate limiter applied');
+    app.use('/api/', rateLimiter);
   }
 
-  // Request logging
+  // Request logging with PII exclusion
   app.use((req, res, next) => {
-    logger.info('Incoming request', {
+    const logData = {
       method: req.method,
       path: req.path,
       ip: req.ip
-    });
+    };
+    if (req.body && Object.keys(req.body).length > 0) {
+      logData.body = logger.excludePII(req.body);
+    }
+    logger.info('Incoming request', logData);
     next();
   });
 
   // Routes
   app.use('/api/health', healthRouter);
-  app.use('/api/support-requests', supportRequestsRouter);
 
   // 404 handler
-  app.use(notFoundHandler);
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Not Found' });
+  });
 
-  // Error handler (must be last)
+  // Error handling
   app.use(errorHandler);
 
   return app;
 }
 
-// Default export for server.js
-async function createDefaultApp() {
-  const { createRateLimiter } = require('./middleware/rateLimiter');
-  const rateLimiter = await createRateLimiter();
-  return createApp(rateLimiter);
-}
+// Create rate limiter for production (disabled when NODE_ENV is 'test')
+const rateLimiter = process.env.NODE_ENV === 'test' 
+  ? null 
+  : rateLimit({
+      windowMs: config.rateLimit.windowMs,
+      max: config.rateLimit.maxRequests,
+      message: 'Too many requests from this IP, please try again later.',
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
 
-module.exports = createApp;
+// Default export: app instance with real limiter for server.js
+module.exports = createApp(rateLimiter);
+// Named export: factory function for tests
 module.exports.createApp = createApp;
-module.exports.createDefaultApp = createDefaultApp;

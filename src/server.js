@@ -1,34 +1,23 @@
+const app = require('./app');
 const config = require('./config');
-const { createDefaultApp } = require('./app');
-const { logger } = require('./utils/logger');
+const logger = require('./utils/logger');
 
-async function startServer() {
-  try {
-    const app = await createDefaultApp();
-    
-    const server = app.listen(config.port, () => {
-      logger.info(`Server started`, {
-        port: config.port,
-        environment: config.nodeEnv
-      });
-    });
+const PORT = config.server.port;
 
-    // Graceful shutdown
-    const shutdown = () => {
-      logger.info('Shutting down server...');
-      server.close(() => {
-        logger.info('Server closed');
-        process.exit(0);
-      });
-    };
+const server = app.listen(PORT, () => {
+  logger.info('Server started', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    logger.info('Server closed');
+    process.exit(0);
+  });
+});
 
-  } catch (error) {
-    logger.error('Failed to start server', { error: error.message });
-    process.exit(1);
-  }
-}
-
-startServer();
+module.exports = server;

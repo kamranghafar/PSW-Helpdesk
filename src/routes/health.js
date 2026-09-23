@@ -1,17 +1,15 @@
 const express = require('express');
-const config = require('../config');
-
 const router = express.Router();
 
 /**
- * GET /api/health
  * Health check endpoint
+ * Returns service status, timestamp, and environment
  */
 router.get('/', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: config.nodeEnv
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
