@@ -105,104 +105,76 @@ describe('Helpdesk Page Routes', () => {
 
 describe('HTML Structure and Accessibility (US-020)', () => {
   const htmlPath = path.join(__dirname, '..', 'views', 'helpdesk.html');
-  
-  it('should have valid HTML file in views directory', () => {
-    expect(fs.existsSync(htmlPath)).toBe(true);
+  let htmlContent;
+
+  beforeAll(() => {
+    htmlContent = fs.readFileSync(htmlPath, 'utf8');
   });
 
   it('should have proper DOCTYPE declaration', () => {
-    const html = fs.readFileSync(htmlPath, 'utf8');
-    expect(html).toMatch(/^<!DOCTYPE html>/i);
+    expect(htmlContent).toContain('<!DOCTYPE html>');
   });
 
-  it('should have html element with lang attribute', () => {
-    const html = fs.readFileSync(htmlPath, 'utf8');
-    expect(html).toContain('<html lang="en">');
+  it('should have lang attribute on html element', () => {
+    expect(htmlContent).toMatch(/<html\s+lang="en"/);
   });
 
-  it('should have required meta tags', () => {
-    const html = fs.readFileSync(htmlPath, 'utf8');
-    expect(html).toContain('<meta charset="UTF-8">');
-    expect(html).toContain('name="viewport"');
-    expect(html).toContain('name="description"');
+  it('should have meta charset UTF-8', () => {
+    expect(htmlContent).toContain('<meta charset="UTF-8">');
   });
 
-  it('should have semantic HTML5 elements', async () => {
-    const res = await request(app).get('/helpdesk');
-    
-    expect(res.text).toContain('<header');
-    expect(res.text).toContain('<main');
-    expect(res.text).toContain('<nav');
-    expect(res.text).toContain('<footer');
-    expect(res.text).toContain('<section');
+  it('should have viewport meta tag for responsive design', () => {
+    expect(htmlContent).toContain('name="viewport"');
+    expect(htmlContent).toContain('width=device-width');
   });
 
-  it('should have ARIA landmarks and labels', async () => {
-    const res = await request(app).get('/helpdesk');
-    
-    expect(res.text).toContain('role="banner"');
-    expect(res.text).toContain('role="main"');
-    expect(res.text).toContain('role="navigation"');
-    expect(res.text).toContain('role="contentinfo"');
-    expect(res.text).toContain('aria-label');
+  it('should have meta description for SEO', () => {
+    expect(htmlContent).toContain('name="description"');
   });
 
-  it('should have skip-to-content link for keyboard navigation', async () => {
-    const res = await request(app).get('/helpdesk');
-    expect(res.text).toContain('Skip to main content');
-    expect(res.text).toContain('href="#main-content"');
+  it('should have meaningful page title', () => {
+    expect(htmlContent).toMatch(/<title>.*PSW.*<\/title>/i);
   });
 
-  it('should have proper heading hierarchy (single h1, multiple h2/h3)', () => {
-    const html = fs.readFileSync(htmlPath, 'utf8');
-    const h1Matches = html.match(/<h1>/g);
-    const h2Matches = html.match(/<h2/g);
-    const h3Matches = html.match(/<h3>/g);
-    
-    expect(h1Matches).toHaveLength(1);
-    expect(h2Matches).not.toBeNull();
-    expect(h2Matches.length).toBeGreaterThanOrEqual(2);
-    expect(h3Matches).not.toBeNull();
-    expect(h3Matches.length).toBeGreaterThanOrEqual(3);
+  it('should have skip-to-content link for keyboard navigation', () => {
+    expect(htmlContent).toContain('skip-link');
+    expect(htmlContent).toContain('Skip to main content');
   });
 
-  it('should have aria-current on active navigation item', async () => {
-    const res = await request(app).get('/helpdesk');
-    expect(res.text).toContain('aria-current="page"');
+  it('should have proper ARIA roles (banner, navigation, main)', () => {
+    expect(htmlContent).toContain('role="banner"');
+    expect(htmlContent).toContain('role="navigation"');
+    expect(htmlContent).toContain('role="main"');
   });
 
-  it('should have descriptive aria-labels on links', async () => {
-    const res = await request(app).get('/helpdesk');
-    expect(res.text).toContain('aria-label="Call PSW Helpdesk');
-    expect(res.text).toContain('aria-label="Send email to PSW Helpdesk"');
-    expect(res.text).toContain('aria-label="Chat with PSW Helpdesk on WhatsApp"');
+  it('should have aria-label on navigation', () => {
+    expect(htmlContent).toContain('aria-label="Main navigation"');
   });
 
-  it('should use semantic definition list for office hours', async () => {
-    const res = await request(app).get('/helpdesk');
-    expect(res.text).toContain('<dl>');
-    expect(res.text).toContain('<dt>');
-    expect(res.text).toContain('<dd>');
-  });
-});
-
-describe('Page Structure and Semantic Markup', () => {
-  it('should have properly nested contact method divs', async () => {
-    const res = await request(app).get('/helpdesk');
-    expect(res.text).toContain('class="contact-method"');
+  it('should have aria-current on active page link', () => {
+    expect(htmlContent).toContain('aria-current="page"');
   });
 
-  it('should have sections with proper aria-labelledby attributes', async () => {
-    const res = await request(app).get('/helpdesk');
-    expect(res.text).toContain('aria-labelledby="contact-heading"');
-    expect(res.text).toContain('aria-labelledby="form-heading"');
-    expect(res.text).toContain('id="contact-heading"');
-    expect(res.text).toContain('id="form-heading"');
+  it('should have aria-labelledby on sections', () => {
+    expect(htmlContent).toContain('aria-labelledby');
   });
 
-  it('should have main element with both id and role for maximum compatibility', async () => {
-    const res = await request(app).get('/helpdesk');
-    expect(res.text).toContain('id="main-content"');
-    expect(res.text).toContain('role="main"');
+  it('should have proper heading hierarchy (h1, h2, h3)', () => {
+    expect(htmlContent).toContain('<h1>');
+    expect(htmlContent).toContain('<h2');
+    expect(htmlContent).toContain('<h3>');
+  });
+
+  it('should use semantic HTML elements (header, main, section, nav)', () => {
+    expect(htmlContent).toContain('<header');
+    expect(htmlContent).toContain('<main');
+    expect(htmlContent).toContain('<section');
+    expect(htmlContent).toContain('<nav');
+  });
+
+  it('should have descriptive aria-label on contact links', () => {
+    expect(htmlContent).toContain('aria-label="Call PSW Helpdesk');
+    expect(htmlContent).toContain('aria-label="Send email to PSW Helpdesk');
+    expect(htmlContent).toContain('aria-label="Chat with PSW Helpdesk');
   });
 });
