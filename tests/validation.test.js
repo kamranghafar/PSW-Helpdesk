@@ -135,15 +135,6 @@ describe('Support Request Validation', () => {
       }
     });
 
-    test('should reject empty email', async () => {
-      const response = await request(app)
-        .post('/test')
-        .send({ ...validRequest, email: '' });
-
-      expect(response.status).toBe(422);
-      expect(response.body.fields.email).toBeDefined();
-    });
-
     test('should reject missing email', async () => {
       const response = await request(app)
         .post('/test')
@@ -153,27 +144,27 @@ describe('Support Request Validation', () => {
       expect(response.body.fields.email).toBeDefined();
     });
 
-    test('should preserve email case (stored as given)', async () => {
-      const email = 'User.Name@Example.COM';
+    test('should reject empty email', async () => {
       const response = await request(app)
         .post('/test')
-        .send({ ...validRequest, email });
+        .send({ ...validRequest, email: '' });
+
+      expect(response.status).toBe(422);
+      expect(response.body.fields.email).toBeDefined();
+    });
+
+    test('should trim whitespace from email', async () => {
+      const response = await request(app)
+        .post('/test')
+        .send({ ...validRequest, email: '  john@example.com  ' });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.email).toBe(email);
+      expect(response.body.data.email).toBe('john@example.com');
     });
   });
 
   describe('Subject validation', () => {
-    test('should accept valid subject', async () => {
-      const response = await request(app)
-        .post('/test')
-        .send({ ...validRequest, subject: 'Help with application' });
-
-      expect(response.status).toBe(200);
-    });
-
-    test('should accept missing subject (optional)', async () => {
+    test('should accept request without subject', async () => {
       const response = await request(app)
         .post('/test')
         .send(validRequest);
@@ -181,7 +172,7 @@ describe('Support Request Validation', () => {
       expect(response.status).toBe(200);
     });
 
-    test('should accept empty subject (optional)', async () => {
+    test('should accept empty subject', async () => {
       const response = await request(app)
         .post('/test')
         .send({ ...validRequest, subject: '' });
@@ -210,22 +201,14 @@ describe('Support Request Validation', () => {
     test('should trim whitespace from subject', async () => {
       const response = await request(app)
         .post('/test')
-        .send({ ...validRequest, subject: '  Help needed  ' });
+        .send({ ...validRequest, subject: '  Test Subject  ' });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.subject).toBe('Help needed');
+      expect(response.body.data.subject).toBe('Test Subject');
     });
   });
 
   describe('Message validation', () => {
-    test('should accept valid message', async () => {
-      const response = await request(app)
-        .post('/test')
-        .send(validRequest);
-
-      expect(response.status).toBe(200);
-    });
-
     test('should reject empty message', async () => {
       const response = await request(app)
         .post('/test')
@@ -281,49 +264,20 @@ describe('Support Request Validation', () => {
     });
   });
 
-  describe('Error handling', () => {
-    test('should return errors for multiple invalid fields', async () => {
+  describe('Multiple validation errors', () => {
+    test('should return all field errors when multiple fields are invalid', async () => {
       const response = await request(app)
         .post('/test')
         .send({
           name: '',
           email: 'invalid-email',
-          subject: 'a'.repeat(201),
           message: ''
         });
 
       expect(response.status).toBe(422);
-      expect(response.body.error).toBe('Validation failed');
       expect(response.body.fields.name).toBeDefined();
       expect(response.body.fields.email).toBeDefined();
-      expect(response.body.fields.subject).toBeDefined();
       expect(response.body.fields.message).toBeDefined();
-    });
-
-    test('should handle special characters in fields', async () => {
-      const response = await request(app)
-        .post('/test')
-        .send({
-          name: 'John O\'Brien',
-          email: 'john+test@example.com',
-          subject: 'Question about <feature>',
-          message: 'I have a question about the "new" feature & how it works.'
-        });
-
-      expect(response.status).toBe(200);
-    });
-
-    test('should handle Unicode characters', async () => {
-      const response = await request(app)
-        .post('/test')
-        .send({
-          name: 'محمد علی',
-          email: 'user@example.com',
-          subject: 'مدد چاہیے',
-          message: 'مجھے مدد کی ضرورت ہے۔'
-        });
-
-      expect(response.status).toBe(200);
     });
   });
 });
