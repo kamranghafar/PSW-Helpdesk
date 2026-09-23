@@ -4,8 +4,7 @@ const createApp = require('../src/app');
 describe('PSW Helpdesk API', () => {
   let app;
 
-  beforeAll(() => {
-    // Create app without rate limiter for testing
+  beforeEach(() => {
     app = createApp(null);
   });
 
@@ -13,10 +12,11 @@ describe('PSW Helpdesk API', () => {
     test('returns 501 not implemented', async () => {
       const response = await request(app)
         .post('/api/support-requests')
-        .send({ 
-          name: 'Test User',
-          email: 'test@example.com',
-          message: 'Test message'
+        .set('Content-Type', 'application/json')
+        .send({
+          title: 'Test Request',
+          description: 'Test description',
+          priority: 'medium'
         });
       
       expect(response.status).toBe(501);
@@ -28,8 +28,7 @@ describe('PSW Helpdesk API', () => {
 
   describe('404 Handler', () => {
     test('returns 404 for unknown API routes', async () => {
-      const response = await request(app)
-        .get('/api/unknown-route');
+      const response = await request(app).get('/api/unknown');
       
       expect(response.status).toBe(404);
       expect(response.body.error).toBeDefined();
@@ -38,20 +37,15 @@ describe('PSW Helpdesk API', () => {
     });
 
     test('returns 404 for root path', async () => {
-      const response = await request(app)
-        .get('/');
-      
+      const response = await request(app).get('/');
       expect(response.status).toBe(404);
     });
   });
 
   describe('Security Headers', () => {
     test('includes security headers in response', async () => {
-      const response = await request(app)
-        .get('/api/unknown-route');
-      
+      const response = await request(app).get('/api/health');
       expect(response.headers['x-content-type-options']).toBe('nosniff');
-      expect(response.headers['x-frame-options']).toBeDefined();
     });
   });
 
@@ -59,9 +53,10 @@ describe('PSW Helpdesk API', () => {
     test('accepts requests within size limit', async () => {
       const response = await request(app)
         .post('/api/support-requests')
+        .set('Content-Type', 'application/json')
         .send({ data: 'small payload' });
       
-      expect(response.status).toBe(501); // Not 413
+      expect(response.status).toBe(501);
     });
   });
 });

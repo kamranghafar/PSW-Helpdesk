@@ -33,6 +33,16 @@ function createApp(rateLimiter, setupRoutes) {
   // Health check endpoint
   app.use('/api/health', healthRouter);
 
+  // Stub endpoint for POST /api/support-requests (not yet implemented)
+  app.post('/api/support-requests', (req, res) => {
+    res.status(501).json({
+      error: {
+        message: 'Endpoint not yet implemented',
+        statusCode: 501
+      }
+    });
+  });
+
   // Allow tests to inject routes before 404 handler
   if (setupRoutes) {
     setupRoutes(app);
@@ -40,7 +50,12 @@ function createApp(rateLimiter, setupRoutes) {
 
   // 404 handler
   app.use((req, res) => {
-    res.status(404).json({ error: 'Not found', path: req.path });
+    res.status(404).json({
+      error: {
+        message: 'Route not found',
+        statusCode: 404
+      }
+    });
   });
 
   // Error handling middleware
