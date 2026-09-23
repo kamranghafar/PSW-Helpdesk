@@ -135,15 +135,6 @@ describe('Support Request Validation', () => {
       }
     });
 
-    test('should reject missing email', async () => {
-      const response = await request(app)
-        .post('/test')
-        .send({ name: validRequest.name, message: validRequest.message });
-
-      expect(response.status).toBe(422);
-      expect(response.body.fields.email).toBeDefined();
-    });
-
     test('should reject empty email', async () => {
       const response = await request(app)
         .post('/test')
@@ -153,13 +144,22 @@ describe('Support Request Validation', () => {
       expect(response.body.fields.email).toBeDefined();
     });
 
+    test('should reject missing email', async () => {
+      const response = await request(app)
+        .post('/test')
+        .send({ name: validRequest.name, message: validRequest.message });
+
+      expect(response.status).toBe(422);
+      expect(response.body.fields.email).toBeDefined();
+    });
+
     test('should trim whitespace from email', async () => {
       const response = await request(app)
         .post('/test')
-        .send({ ...validRequest, email: '  john@example.com  ' });
+        .send({ ...validRequest, email: '  user@example.com  ' });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.email).toBe('john@example.com');
+      expect(response.body.data.email).toBe('user@example.com');
     });
   });
 
@@ -172,10 +172,10 @@ describe('Support Request Validation', () => {
       expect(response.status).toBe(200);
     });
 
-    test('should accept empty subject', async () => {
+    test('should accept valid subject', async () => {
       const response = await request(app)
         .post('/test')
-        .send({ ...validRequest, subject: '' });
+        .send({ ...validRequest, subject: 'Test subject' });
 
       expect(response.status).toBe(200);
     });
@@ -201,10 +201,18 @@ describe('Support Request Validation', () => {
     test('should trim whitespace from subject', async () => {
       const response = await request(app)
         .post('/test')
-        .send({ ...validRequest, subject: '  Test Subject  ' });
+        .send({ ...validRequest, subject: '  Test subject  ' });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.subject).toBe('Test Subject');
+      expect(response.body.data.subject).toBe('Test subject');
+    });
+
+    test('should treat empty subject as optional', async () => {
+      const response = await request(app)
+        .post('/test')
+        .send({ ...validRequest, subject: '' });
+
+      expect(response.status).toBe(200);
     });
   });
 
@@ -264,20 +272,32 @@ describe('Support Request Validation', () => {
     });
   });
 
-  describe('Multiple validation errors', () => {
-    test('should return all field errors when multiple fields are invalid', async () => {
+  describe('Error response format', () => {
+    test('should return 422 status for validation errors', async () => {
       const response = await request(app)
         .post('/test')
-        .send({
-          name: '',
-          email: 'invalid-email',
-          message: ''
-        });
+        .send({});
 
       expect(response.status).toBe(422);
-      expect(response.body.fields.name).toBeDefined();
-      expect(response.body.fields.email).toBeDefined();
-      expect(response.body.fields.message).toBeDefined();
+    });
+
+    test('should return error object with fields', async () => {
+      const response = await request(app)
+        .post('/test')
+        .send({});
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('fields');
+    });
+
+    test('should include all validation errors', async () => {
+      const response = await request(app)
+        .post('/test')
+        .send({});
+
+      expect(response.body.fields).toHaveProperty('name');
+      expect(response.body.fields).toHaveProperty('email');
+      expect(response.body.fields).toHaveProperty('message');
     });
   });
 });
