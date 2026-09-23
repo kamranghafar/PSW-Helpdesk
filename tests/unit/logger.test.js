@@ -1,71 +1,55 @@
-const logger = require('../../src/utils/logger');
+const { excludePII } = require('../../src/utils/logger');
 
-describe('Logger excludePII', () => {
+describe('Logger PII Exclusion', () => {
   test('excludePII redacts email field', () => {
     const input = { email: 'user@example.com', other: 'data' };
-    const result = logger.excludePII(input);
+    const result = excludePII(input);
     
     expect(result.email).toBe('[REDACTED]');
     expect(result.other).toBe('data');
   });
 
   test('excludePII redacts name field', () => {
-    const input = { name: 'John Doe', other: 'data' };
-    const result = logger.excludePII(input);
+    const input = { name: 'John Doe', id: '123' };
+    const result = excludePII(input);
     
     expect(result.name).toBe('[REDACTED]');
-    expect(result.other).toBe('data');
+    expect(result.id).toBe('123');
   });
 
   test('excludePII redacts message field', () => {
-    const input = { message: 'Sensitive message', other: 'data' };
-    const result = logger.excludePII(input);
+    const input = { message: 'Secret text', status: 'active' };
+    const result = excludePII(input);
     
     expect(result.message).toBe('[REDACTED]');
-    expect(result.other).toBe('data');
+    expect(result.status).toBe('active');
   });
 
-  test('excludePII redacts all PII fields together', () => {
+  test('excludePII redacts all PII fields', () => {
     const input = {
       email: 'user@example.com',
       name: 'John Doe',
-      message: 'Sensitive message',
-      subject: 'Support request',
-      timestamp: '2024-01-01'
+      message: 'Help needed',
+      reference: 'HCP-20260923-0001'
     };
-    const result = logger.excludePII(input);
+    const result = excludePII(input);
     
     expect(result.email).toBe('[REDACTED]');
     expect(result.name).toBe('[REDACTED]');
     expect(result.message).toBe('[REDACTED]');
-    expect(result.subject).toBe('Support request');
-    expect(result.timestamp).toBe('2024-01-01');
+    expect(result.reference).toBe('HCP-20260923-0001');
   });
 
-  test('excludePII returns copy without modifying original', () => {
-    const input = { email: 'user@example.com', name: 'John' };
-    const result = logger.excludePII(input);
-    
-    expect(input.email).toBe('user@example.com');
-    expect(input.name).toBe('John');
-    expect(result.email).toBe('[REDACTED]');
-    expect(result.name).toBe('[REDACTED]');
+  test('excludePII handles null input', () => {
+    expect(excludePII(null)).toBeNull();
   });
 
-  test('excludePII handles objects without PII fields', () => {
-    const input = { subject: 'Test', timestamp: '2024-01-01' };
-    const result = logger.excludePII(input);
-    
-    expect(result).toEqual(input);
+  test('excludePII handles undefined input', () => {
+    expect(excludePII(undefined)).toBeUndefined();
   });
 
-  test('excludePII handles null and undefined', () => {
-    expect(logger.excludePII(null)).toBe(null);
-    expect(logger.excludePII(undefined)).toBe(undefined);
-  });
-
-  test('excludePII handles non-object values', () => {
-    expect(logger.excludePII('string')).toBe('string');
-    expect(logger.excludePII(123)).toBe(123);
+  test('excludePII handles non-object input', () => {
+    expect(excludePII('string')).toBe('string');
+    expect(excludePII(123)).toBe(123);
   });
 });

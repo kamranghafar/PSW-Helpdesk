@@ -1,8 +1,16 @@
 const express = require('express');
 const helmet = require('helmet');
+const config = require('./config');
 const healthRouter = require('./routes/health');
-const logger = require('./utils/logger');
+const errorHandler = require('./middleware/errorHandler');
+const { logger, excludePII } = require('./utils/logger');
 
+/**
+ * Creates and configures an Express application
+ * @param {Object} rateLimiter - Optional rate limiter middleware
+ * @param {Function} setupRoutes - Optional callback to add routes before 404 handler
+ * @returns {express.Application} Configured Express app
+ */
 function createApp(rateLimiter, setupRoutes) {
   const app = express();
 
@@ -10,40 +18,34 @@ function createApp(rateLimiter, setupRoutes) {
   app.use(helmet());
 
   // Body parsing
-  app.use(express.json({ limit: '10kb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-
-  // Apply rate limiter if provided (disabled in test mode)
-  if (rateLimiter) {
-    app.use(rateLimiter);
-  }
+  app.use(express.json({ limit: config.security.bodyLimit }));
+  app.use(express.urlencoded({ extended: true, limit: config.security.bodyLimit }));
 
   // Request logging
   app.use((req, res, next) => {
-    const body = req.body ? logger.excludePII(req.body) : {};
-    logger.info('Incoming request', {
+    logger.info({
       method: req.method,
       path: req.path,
       ip: req.ip,
-      body
+      body: req.body ? excludePII(req.body) : undefined
     });
     next();
   });
 
-  // Health check endpoint
+  // Rate limiting (only if provided)
+  if (rateLimiter) {
+    app.use(rateLimiter);
+  }
+
+  // Health check route
   app.use('/api/health', healthRouter);
 
-  // Stub endpoint for POST /api/support-requests (not yet implemented)
+  // Stub for support requests endpoint
   app.post('/api/support-requests', (req, res) => {
-    res.status(501).json({
-      error: {
-        message: 'Endpoint not yet implemented',
-        statusCode: 501
-      }
-    });
+    res.status(501).json({ error: 'Not implemented' });
   });
 
-  // Allow tests to inject routes before 404 handler
+  // Allow tests to inject additional routes
   if (setupRoutes) {
     setupRoutes(app);
   }
@@ -51,25 +53,13 @@ function createApp(rateLimiter, setupRoutes) {
   // 404 handler
   app.use((req, res) => {
     res.status(404).json({
-      error: {
-        message: 'Route not found',
-        statusCode: 404
-      },
+      error: 'Not found',
       path: req.path
     });
   });
 
-  // Error handling middleware
-  app.use((err, req, res, next) => {
-    logger.error('Error handling request', {
-      error: err.message,
-      stack: err.stack,
-      path: req.path
-    });
-    res.status(err.status || 500).json({
-      error: err.message || 'Internal server error'
-    });
-  });
+  // Error handler
+  app.use(errorHandler);
 
   return app;
 }

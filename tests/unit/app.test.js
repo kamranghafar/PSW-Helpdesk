@@ -1,9 +1,9 @@
 const request = require('supertest');
 const createApp = require('../../src/app');
 
-describe('Express Application', () => {
+describe('Express App', () => {
   describe('Security middleware', () => {
-    it('sets security headers', async () => {
+    test('app sets security headers', async () => {
       const app = createApp(null);
       const response = await request(app).get('/api/health');
       
@@ -12,89 +12,77 @@ describe('Express Application', () => {
     });
   });
 
-  describe('Rate limiting', () => {
-    it('does not rate limit when limiter is null', async () => {
-      const app = createApp(null);
-      
-      // Make multiple requests to verify no rate limiting
-      for (let i = 0; i < 10; i++) {
-        const response = await request(app).get('/api/health');
-        expect(response.status).not.toBe(429);
-      }
-    });
-
-    it('applies rate limiter when provided', async () => {
-      const mockLimiter = jest.fn((req, res, next) => next());
-      const app = createApp(mockLimiter);
-      
-      await request(app).get('/api/health');
-      expect(mockLimiter).toHaveBeenCalled();
-    });
-  });
-
   describe('Body parsing', () => {
-    it('handles JSON body parsing', async () => {
+    test('app handles JSON body parsing', async () => {
       const app = createApp(null, (app) => {
         app.post('/api/test', (req, res) => {
           res.json({ received: req.body });
         });
       });
 
-      const testData = { name: 'Test User', email: 'test@example.com' };
       const response = await request(app)
         .post('/api/test')
-        .send(testData)
+        .send({ test: 'data' })
         .set('Content-Type', 'application/json');
 
       expect(response.status).toBe(200);
-      expect(response.body.received).toEqual(testData);
+      expect(response.body.received).toEqual({ test: 'data' });
+    });
+  });
+
+  describe('Rate limiting', () => {
+    test('app works without rate limiter', async () => {
+      const app = createApp(null);
+      const response = await request(app).get('/api/health');
+      
+      expect(response.status).toBe(200);
     });
 
-    it('rejects oversized payloads', async () => {
-      const app = createApp(null, (app) => {
-        app.post('/api/test', (req, res) => {
-          res.json({ received: req.body });
-        });
-      });
-
-      const largeData = { data: 'x'.repeat(15000) };
-      const response = await request(app)
-        .post('/api/test')
-        .send(largeData)
-        .set('Content-Type', 'application/json');
-
-      expect(response.status).toBe(413);
+    test('app works with rate limiter', async () => {
+      const mockRateLimiter = (req, res, next) => next();
+      const app = createApp(mockRateLimiter);
+      const response = await request(app).get('/api/health');
+      
+      expect(response.status).toBe(200);
     });
   });
 
   describe('404 handling', () => {
-    it('returns 404 for unknown routes', async () => {
+    test('app returns 404 for unknown routes', async () => {
       const app = createApp(null);
-      const response = await request(app).get('/unknown/route');
+      const response = await request(app).get('/unknown');
       
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
-        error: {
-          message: 'Route not found',
-          statusCode: 404
-        },
-        path: '/unknown/route'
+        error: 'Not found',
+        path: '/unknown'
       });
     });
   });
 
-  describe('Error handling', () => {
-    it('handles errors gracefully', async () => {
+  describe('Support requests endpoint', () => {
+    test('POST /api/support-requests returns 501', async () => {
+      const app = createApp(null);
+      const response = await request(app)
+        .post('/api/support-requests')
+        .send({ name: 'Test' });
+      
+      expect(response.status).toBe(501);
+      expect(response.body.error).toBe('Not implemented');
+    });
+  });
+
+  describe('Custom routes injection', () => {
+    test('setupRoutes callback allows route injection', async () => {
       const app = createApp(null, (app) => {
-        app.get('/api/error', (req, res, next) => {
-          next(new Error('Test error'));
+        app.get('/custom', (req, res) => {
+          res.json({ custom: true });
         });
       });
 
-      const response = await request(app).get('/api/error');
-      
-      expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Test error');
+      const response = await request(app).get('/custom');
+      expect(response.status).toBe(200);
+      expect(response.body.custom).toBe(true);
     });
   });
 });

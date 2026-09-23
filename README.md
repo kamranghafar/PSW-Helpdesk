@@ -1,12 +1,45 @@
 # PSW Helpdesk Backend
 
-Backend API for PSW Helpdesk Contact and Support Request System.
+Backend API for the Pakistan Single Window (PSW) Helpdesk system.
+
+## Project Structure
+
+```
+.
+├── src/
+│   ├── app.js                 # Express app factory
+│   ├── server.js              # Server entry point
+│   ├── config/
+│   │   └── index.js           # Configuration management
+│   ├── middleware/
+│   │   └── errorHandler.js    # Global error handler
+│   ├── routes/
+│   │   └── health.js          # Health check endpoint
+│   └── utils/
+│       └── logger.js          # Winston logger with PII protection
+├── tests/
+│   └── unit/
+│       ├── app.test.js        # App tests
+│       ├── health.test.js     # Health endpoint tests
+│       └── logger.test.js     # Logger tests
+├── jest.config.js             # Jest configuration
+└── package.json               # Project dependencies
+```
+
+## Features
+
+- **Express.js 4.x** web framework
+- **Helmet** security middleware
+- **Rate limiting** (disabled in test mode)
+- **Structured logging** with Winston (PII-safe)
+- **Health check** endpoint with environment info
+- **Error handling** middleware
+- **Test coverage** with Jest (50% threshold)
 
 ## Requirements
 
 - Node.js 20 LTS or higher
-- PostgreSQL 15+
-- Redis (for production rate limiting)
+- npm 10 or higher
 
 ## Installation
 
@@ -16,77 +49,68 @@ npm install
 
 ## Configuration
 
-Copy `.env.example` to `.env` and configure:
+Environment variables:
 
-```bash
-cp .env.example .env
-```
+- `PORT` - Server port (default: 3000)
+- `NODE_ENV` - Environment (development/test/production)
+- `DATABASE_URL` - PostgreSQL connection string
+- `REDIS_URL` - Redis connection string
+- `RATE_LIMIT_WINDOW_MS` - Rate limit window (default: 600000 = 10 minutes)
+- `RATE_LIMIT_MAX_REQUESTS` - Max requests per window (default: 5)
+- `BODY_LIMIT` - Request body size limit (default: 10kb)
+- `CORS_ORIGIN` - CORS allowed origin (default: *)
 
 ## Running
 
-Development:
+### Development
 ```bash
 npm run dev
 ```
 
-Production:
+### Production
 ```bash
 npm start
 ```
 
 ## Testing
 
-Run tests:
 ```bash
+# Run all tests with coverage
 npm test
-```
 
-Run with coverage:
-```bash
-npm run test:coverage
+# Watch mode
+npm run test:watch
 ```
-
-**Note**: Functions coverage threshold is currently set to 50% for initial scaffolding. This should be raised to 80% once full implementation is complete.
 
 ## API Endpoints
 
 ### Health Check
-- `GET /api/health` - Returns service health status and environment
-
-## Architecture
-
-- Express.js 4.x framework
-- Helmet.js for security headers
-- Rate limiting with express-rate-limit (disabled in test mode)
-- Winston structured logging with PII exclusion
-- Modular configuration management
-
-## Security Features
-
-- Rate limiting: 5 requests per IP per 10 minutes (production only)
-- Request size limit: 10KB
-- Security headers via Helmet.js
-- CORS configuration
-- PII exclusion in logs (email, name, message fields redacted)
-
-## Project Structure
-
 ```
-src/
-├── app.js              # Express app factory with createApp(rateLimiter)
-├── server.js           # Server entry point
-├── config/
-│   └── index.js        # Grouped configuration (database, redis, rateLimit, security)
-├── middleware/
-│   └── errorHandler.js # Global error handling
-├── routes/
-│   └── health.js       # Health check endpoint
-└── utils/
-    └── logger.js       # Winston logger with excludePII function
+GET /api/health
 
-tests/
-└── unit/
-    ├── app.test.js     # App factory tests
-    ├── health.test.js  # Health endpoint tests
-    └── logger.test.js  # Logger and excludePII tests
+Response:
+{
+  "status": "ok",
+  "timestamp": "2026-09-23T10:00:00.000Z",
+  "environment": "development"
+}
 ```
+
+### Support Requests (stub)
+```
+POST /api/support-requests
+
+Response: 501 Not Implemented
+```
+
+## Security
+
+- Helmet.js security headers
+- Rate limiting (5 requests per 10 minutes per IP in production)
+- Body size limits (10KB)
+- PII redaction in logs
+- HTTPS enforced in production
+
+## License
+
+UNLICENSED - Internal PSW Project

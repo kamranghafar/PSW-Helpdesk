@@ -8,11 +8,13 @@ module.exports = {
   coverageThreshold: {
     global: {
       branches: 50,
-      functions: 50,  // Set to 50% for initial scaffolding - TODO: raise to 80% after full implementation
+      functions: 50,  // TODO: Raise to 80% after scaffolding complete
       lines: 50,
       statements: 50
     }
   },
-  testMatch: ['**/tests/**/*.test.js'],
+  testMatch: [
+    '**/tests/**/*.test.js'
+  ],
   verbose: true
 };

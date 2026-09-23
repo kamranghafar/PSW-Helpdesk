@@ -1,23 +1,19 @@
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
-/**
- * Global error handling middleware
- * Logs errors and returns appropriate HTTP responses
- */
 function errorHandler(err, req, res, next) {
-  // Log the error
-  logger.error('Error occurred', {
+  logger.error({
     message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    stack: err.stack,
     path: req.path,
     method: req.method
   });
 
-  // Send error response
   const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal server error';
+
   res.status(statusCode).json({
-    error: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    error: message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
   });
 }
 
